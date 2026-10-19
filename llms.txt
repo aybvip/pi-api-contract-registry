@@ -1,0 +1,72 @@
+# Pi API Contract Registry — llms.txt
+# A read-only, dated record of measured Soroban RPC behaviour on Pi Network,
+# with wire types, drift entries, and live conformance re-measurement.
+
+> API documentation says what a method SHOULD return. This registry records what
+> the endpoint DID return, on a dated run at a stated version, and lists where a
+> client trusting the documentation will break.
+
+## What it is
+- read-only, zero-dependency, Node (ESM)
+- pure data: lib.mjs (registry, scope, methods, wire types, drift, checks)
+- engine: conformance.mjs (evaluate, summarise, decide publishability)
+- render: render.mjs (registry, drift, boundaries)
+- CLI: registry-cli.mjs
+
+## Three concepts, kept apart
+- documented contract  what a published specification says
+- measured contract    what this endpoint actually returned, dated, versioned
+- drift                where measured departs from client expectation
+
+## Three scopes (NO universal scope exists)
+- endpoint-scoped | version-scoped | protocol-scoped
+
+## Wire types are recorded as the wire spells them
+- getHealth.latestLedgerCloseTime is a STRING (Unix seconds as text)
+- getFeeStats figures are STRINGS ("100000") while ledgerCount is a NUMBER
+- getTransaction.events is an OBJECT ({}) on NOT_FOUND, an ARRAY on success
+
+## Recorded scope (measured 2026-10-19)
+- endpoint: https://rpc.testnet.minepi.com
+- passphrase: "Pi Testnet"
+- node: 28.0.1  protocol: 28
+- methods: 10 (9 supported, 1 absent)
+- drift entries: 9 (3 high, 4 medium, 2 low)
+- retention window: 120960 ledgers (matches pi-soroban-events)
+- mainnet: NOT REACHABLE (HTTP 503)
+
+## Drift (observed vs expected)
+- D-SIM-1 high  simulateTransaction: a failure is NOT a JSON-RPC error; HTTP 200,
+  message inside result.error
+- D-TX-1  high  getTransaction: result.events type depends on status
+- D-CON-1 high  getContractData: absent here (-32601); use getLedgerEntries
+- D-FEE-1 med   getFeeStats: numeric figures returned as strings
+- D-EVT-1 med   getEvents: two timestamp encodings on one endpoint
+- D-ENT-1 med   getLedgerEntries: empty key list is -32603, not empty result
+- D-TX-2  med   getTransaction: NOT_FOUND inside a success envelope
+- D-VER-1 low   getVersionInfo: buildTimestamp has no timezone
+- D-FEE-2 low   getFeeStats: two fee objects cover different ledger counts
+
+## Conformance: three verdicts, never conflated
+- pass   the live endpoint still matches the recorded row
+- fail   the endpoint MOVED; the row is stale and must be updated
+- error  the check could not be evaluated; NO conclusion either way
+- publishable is true ONLY when every check passed
+- exit 0 all pass | 1 any fail | 2 any error
+
+## Usage
+- node registry-cli.mjs --registry [--json]
+- node registry-cli.mjs --drift
+- node registry-cli.mjs --conformance [--json]
+- node registry-cli.mjs --boundaries | --help
+- --rpc <url>   override the endpoint (only for --conformance)
+
+## Not claimed
+- that this is the official or authoritative API reference
+- that any row will still hold tomorrow
+- that a row holds at another endpoint or version
+- that an observed departure is a bug (drift is recorded, not judged)
+- that a pass covers methods or fields not in the check list
+- that an error is a fail
+- anything about Mainnet
+- that Pi Network has adopted, reviewed, or endorsed this

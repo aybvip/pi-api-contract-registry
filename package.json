@@ -1,0 +1,18 @@
+{
+  "name": "pi-api-contract-registry",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A read-only, dated record of measured Soroban RPC behaviour on Pi Network, with wire types, drift entries, and live conformance re-measurement.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node test/registry.test.mjs",
+    "registry": "node registry-cli.mjs --registry",
+    "drift": "node registry-cli.mjs --drift",
+    "conformance": "node registry-cli.mjs --conformance",
+    "boundaries": "node registry-cli.mjs --boundaries"
+  }
+}
